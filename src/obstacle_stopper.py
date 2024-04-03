@@ -7,6 +7,8 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from laser_line_extraction.msg import LineSegmentList
 from geometry_msgs.msg import Point
+from sound_play.msg import SoundRequest
+from sound_play.libsoundplay import SoundClient
 
 class ObstacleStopper:
     def __init__(self):
@@ -14,7 +16,7 @@ class ObstacleStopper:
         rospy.loginfo("obstacle_stopper started!")
 
         # Parameters
-        self.stop_duration = rospy.Duration(1)  # 1 second stop duration
+        self.stop_duration = rospy.Duration(2)  # 2 seconds stop duration
         self.max_consecutive_stops = 5  # Maximum consecutive stops allowed
         self.stop_interval = rospy.Duration(3)  # Duration to wait after reaching max consecutive stops
 
@@ -38,11 +40,13 @@ class ObstacleStopper:
         self.front_line_segments = None
         self.back_line_segments = None
 
+        # Sound client for playing audio
+        self.soundhandle = SoundClient()
+
     def odometry_callback(self, odom_msg):
         # Extract linear velocity from odometry message
         self.linear_velocity = odom_msg.twist.twist.linear.x
-        # rospy.loginfo(f"velocity: {self.linear_velocity}")
-        
+
     def front_scan_callback(self, scan_msg):
         if self.linear_velocity >= 0.05:
             if self.stopped or self.front_line_segments is None:
@@ -126,6 +130,9 @@ class ObstacleStopper:
             self.back_line_segments = None
 
     def stop_robot(self):
+        # Play sound
+        self.soundhandle.playWave('/home/u/Documents/TKO_project/Voice/careful.wav')
+
         # Stop the robot motion
         cmd_vel_msg = Twist()
         cmd_vel_msg.linear.x = 0.0
@@ -135,7 +142,7 @@ class ObstacleStopper:
         self.last_stop_time = rospy.Time.now()
         self.stopped = True
         self.consecutive_stop_count += 1
-        rospy.loginfo("Robot paused for 1 second due to dynamic obstacle detected.")  # Pause navigation for 1 second
+        rospy.loginfo("Robot paused for 2 seconds due to dynamic obstacle detected.")  # Pause navigation for 2 seconds
         # Publish zero velocities repeatedly for stop_duration seconds
         while rospy.Time.now() - self.last_stop_time < self.stop_duration:
             self.cmd_vel_pub.publish(cmd_vel_msg)
