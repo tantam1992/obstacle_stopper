@@ -2,11 +2,9 @@
 
 import numpy as np
 import rospy
-from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
+from obstacle_detector.msg import Obstacles
 from nav_msgs.msg import Odometry
-from laser_line_extraction.msg import LineSegmentList
-from geometry_msgs.msg import Point
 from sound_play.msg import SoundRequest
 from sound_play.libsoundplay import SoundClient
 
@@ -21,117 +19,37 @@ class ObstacleStopper:
         self.stop_interval = rospy.Duration(3)  # Duration to wait after reaching max consecutive stops
 
         # Subscribers and Publishers
-        rospy.Subscriber('/odometry/filtered', Odometry, self.odometry_callback)
-        rospy.Subscriber('/collisionFront/scan_filtered', LaserScan, self.front_scan_callback)
-        rospy.Subscriber('/collisionBack/scan_filtered', LaserScan, self.back_scan_callback)
-        rospy.Subscriber('/collisionFront/line_segments', LineSegmentList, self.front_line_segments_callback)
-        rospy.Subscriber('/collisionBack/line_segments', LineSegmentList, self.back_line_segments_callback)
+        rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_callback)
+        rospy.Subscriber('/raw_obstacles', Obstacles, self.raw_obstacles_callback)
         self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+
+        # Sound client for playing audio
+        self.soundhandle = SoundClient()
 
         self.last_stop_time = rospy.Time(0)
         self.stopped = False
         self.consecutive_stop_count = 0
         self.stop_timer = rospy.Time(0)
 
-        self.robot_width = 0.8  # Adjust as needed
-        self.scan_range = 1.5  # Adjust as needed
-        self.linear_velocity = 0.0
+        self.linear_velocity = 0.0       
+    
+    def cmd_vel_callback(self, cmd_vel_msg):
+        # Extract linear velocity from cmd_vel message
+        self.linear_velocity = cmd_vel_msg.linear.x
 
-        self.front_line_segments = None
-        self.back_line_segments = None
-
-        # Sound client for playing audio
-        self.soundhandle = SoundClient()
-
-    def odometry_callback(self, odom_msg):
-        # Extract linear velocity from odometry message
-        self.linear_velocity = odom_msg.twist.twist.linear.x
-
-    def front_scan_callback(self, scan_msg):
-        if self.linear_velocity >= 0.05:
-            if self.stopped or self.front_line_segments is None:
-                # If already stopped or line segments detected don't process further
+    def raw_obstacles_callback(self, obstacles_msg):
+        if self.linear_velocity > 0.0:
+            # Check if there are any circles detected
+            if obstacles_msg.circles:
+                rospy.loginfo("Obstacle detected in front of the robot")
+                if not self.can_stop():
+                    return
+                self.stop_robot()
                 return
-
-            # Define the dimensions of the area around the robot
-            area_width = 1.0  # Width of the area (in meters)
-            area_length = 1.5  # Length of the area (in meters)
-
-            # Check if there are any obstacles detected in the specified area
-            for i, range_value in enumerate(scan_msg.ranges):
-                if np.isnan(range_value):
-                    continue  # Ignore NaN values
-                else:
-                    # Assuming scan_msg.ranges contains the distance data
-                    # and scan_msg.angle_increment contains the angle increment data
-                    angle = scan_msg.angle_min + i * scan_msg.angle_increment
-
-                    # Check if the obstacle is within the specified area
-                    if abs(angle) < np.arctan(area_width / (2 * area_length)) and range_value < area_length:
-                        for segment in self.front_line_segments:
-                            start = segment.start
-                            end = segment.end
-                            distance = np.sqrt((end[0] - start[0])**2 + (end[1] - start[1])**2)
-                            if distance < 0.8:
-                                rospy.loginfo(f"Front Scan - Index: {i}, Range: {range_value}, Distance: {distance}")
-                                if not self.can_stop():
-                                    return
-                                self.stop_robot()
-                                return
-
-    def back_scan_callback(self, scan_msg):
-        if self.linear_velocity <= -0.05:
-            if self.stopped or self.back_line_segments is None:
-                # If already stopped or line segments detected don't process further
-                return
-
-            # Define the dimensions of the area around the robot
-            area_width = 1.0  # Width of the area (in meters)
-            area_length = 1.5  # Length of the area (in meters)
-
-            # Check if there are any obstacles detected in the specified area
-            for i, range_value in enumerate(scan_msg.ranges):
-                if np.isnan(range_value):
-                    continue  # Ignore NaN values
-                else:
-                    # Assuming scan_msg.ranges contains the distance data
-                    # and scan_msg.angle_increment contains the angle increment data
-                    angle = scan_msg.angle_min + i * scan_msg.angle_increment
-
-                    # Check if the obstacle is within the specified area
-                    if abs(angle) < np.arctan(area_width / (2 * area_length)) and range_value < area_length:
-                        for segment in self.back_line_segments:
-                            start = segment.start
-                            end = segment.end
-                            distance = np.sqrt((end[0] - start[0])**2 + (end[1] - start[1])**2)
-                            if distance < 0.8:
-                                rospy.loginfo(f"Back Scan - Index: {i}, Range: {range_value}, Distance: {distance}")
-                                if not self.can_stop():
-                                    return
-                                self.stop_robot()
-                                return
-
-    def front_line_segments_callback(self, line_segments_msg):
-        # Check if line segments are detected
-        if line_segments_msg.line_segments:
-            # Store the line segments data
-            self.front_line_segments = line_segments_msg.line_segments
-        else:
-            # If no line segments detected, set to None
-            self.front_line_segments = None
-
-    def back_line_segments_callback(self, line_segments_msg):
-        # Check if line segments are detected
-        if line_segments_msg.line_segments:
-            # Store the line segments data
-            self.back_line_segments = line_segments_msg.line_segments
-        else:
-            # If no line segments detected, set to None
-            self.back_line_segments = None
 
     def stop_robot(self):
         # Play sound
-        self.soundhandle.playWave('/home/u/Documents/TKO_project/Voice/careful.wav')
+        # self.soundhandle.playWave('/home/u/Documents/TKO_project/Voice/careful.wav')
 
         # Stop the robot motion
         cmd_vel_msg = Twist()
