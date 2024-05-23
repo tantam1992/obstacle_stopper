@@ -19,9 +19,10 @@ class ObstacleStopper:
         self.stop_interval = rospy.Duration(3)  # Duration to wait after reaching max consecutive stops
 
         # Subscribers and Publishers
-        rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_callback)
+        # rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_callback)
+        rospy.Subscriber('/nav_vel', Twist, self.nav_vel_callback)
         rospy.Subscriber('/raw_obstacles', Obstacles, self.raw_obstacles_callback)
-        self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.tel_vel_pub = rospy.Publisher('/tel_vel', Twist, queue_size=10)
 
         # Sound client for playing audio
         self.soundhandle = SoundClient()
@@ -33,14 +34,14 @@ class ObstacleStopper:
 
         self.linear_velocity = 0.0       
     
-    def cmd_vel_callback(self, cmd_vel_msg):
+    def nav_vel_callback(self, nav_vel_msg):
         # Extract linear velocity from cmd_vel message
-        self.linear_velocity = cmd_vel_msg.linear.x
+        self.linear_velocity = nav_vel_msg.linear.x
 
     def raw_obstacles_callback(self, obstacles_msg):
         if self.linear_velocity > 0.0:
             # Check if there are any circles detected
-            if obstacles_msg.circles:
+            if obstacles_msg.segments:
                 rospy.loginfo("Obstacle detected in front of the robot")
                 if not self.can_stop():
                     return
@@ -49,13 +50,13 @@ class ObstacleStopper:
 
     def stop_robot(self):
         # Play sound
-        # self.soundhandle.playWave('/home/u/Documents/TKO_project/Voice/careful.wav')
+        self.soundhandle.playWave('/home/u/tko_ws/src/obstacle_stopper/voice/careful.wav')
 
         # Stop the robot motion
-        cmd_vel_msg = Twist()
-        cmd_vel_msg.linear.x = 0.0
-        cmd_vel_msg.linear.y = 0.0
-        cmd_vel_msg.angular.z = 0.0
+        tel_vel_msg = Twist()
+        tel_vel_msg.linear.x = 0.0 
+        tel_vel_msg.linear.y = 0.0
+        tel_vel_msg.angular.z = 0.0
         # Record the time when the robot stopped
         self.last_stop_time = rospy.Time.now()
         self.stopped = True
@@ -63,7 +64,7 @@ class ObstacleStopper:
         rospy.loginfo("Robot paused for 2 seconds due to dynamic obstacle detected.")  # Pause navigation for 2 seconds
         # Publish zero velocities repeatedly for stop_duration seconds
         while rospy.Time.now() - self.last_stop_time < self.stop_duration:
-            self.cmd_vel_pub.publish(cmd_vel_msg)
+            self.tel_vel_pub.publish(tel_vel_msg)
         # After stop_duration seconds, resume navigation
         self.stopped = False
 
