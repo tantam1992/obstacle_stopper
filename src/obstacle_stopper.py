@@ -52,7 +52,7 @@ class ObstacleStopper:
         # Play sound
         self.soundhandle.playWave('/home/u/tko_ws/src/obstacle_stopper/voice/careful.wav')
 
-        # Stop the robot motion
+        # Stop the robot motion 
         tel_vel_msg = Twist()
         tel_vel_msg.linear.x = 0.0 
         tel_vel_msg.linear.y = 0.0
