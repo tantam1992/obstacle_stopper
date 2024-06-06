@@ -79,7 +79,7 @@ class ObstacleStopper:
         return False
 
     def is_within_back_bounding_box(self, x, y):
-        # Define the bounding box dimensions (2m length, 0.8m width)
+        # Define the bounding box dimensions (1m length, 0.8m width)
         if -2.0 <= x <= -1.0 and -0.4 <= y <= 0.4:
             return True
         return False
