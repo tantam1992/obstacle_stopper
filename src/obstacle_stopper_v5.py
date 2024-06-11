@@ -5,7 +5,6 @@ from geometry_msgs.msg import Twist
 from obstacle_detector.msg import Obstacles
 from sound_play.libsoundplay import SoundClient
 from std_srvs.srv import Empty
-from yolo_v8_ros_msgs.msg import BoundingBoxes
 
 class ObstacleStopper:
     def __init__(self):
@@ -23,8 +22,6 @@ class ObstacleStopper:
         # Subscribers and Publishers
         rospy.Subscriber('/nav_vel', Twist, self.nav_vel_callback)
         rospy.Subscriber('/raw_obstacles', Obstacles, self.raw_obstacles_callback)
-        rospy.Subscriber('/yolov8/bounding_boxes', BoundingBoxes, self.yolov8_callback)
-        
         self.tel_vel_pub = rospy.Publisher('/tel_vel', Twist, queue_size=10)
         self.obstacles_pub = rospy.Publisher('/cleared_obstacles', Obstacles, queue_size=10)
 
@@ -37,7 +34,6 @@ class ObstacleStopper:
         self.stop_timer = rospy.Time(0)
 
         self.linear_velocity = 0.0
-        self.person_detected = False
         self.obstacles_detected = False
 
     def nav_vel_callback(self, nav_vel_msg):
@@ -66,22 +62,6 @@ class ObstacleStopper:
         if not self.obstacles_detected:
             rospy.loginfo("No obstacles detected within the bounding box")
 
-    def yolov8_callback(self, bounding_boxes_msg):
-        if self.linear_velocity >= -0.01:
-            for box in bounding_boxes_msg.bounding_boxes:
-                if box.object_class == "person" and self.is_person_in_front(box):
-                    rospy.loginfo("Person detected at x: %.2f, y: %.2f, z: %.2f", box.x, box.y, box.z)
-                    self.person_detected = True
-                    if not self.can_stop():
-                        return
-                    self.stop_robot()
-                    return
-            if not self.person_detected:
-                rospy.loginfo("No person detected within the bounding box")
-
-    def is_person_in_front(self, box):
-        return -0.4 <= box.x <= 0.4 and box.z < 2.0
-    
     def is_within_front_bounding_box(self, x, y):
         return self.front_bounding_box[0] <= x <= self.front_bounding_box[1] and self.front_bounding_box[2] <= y <= self.front_bounding_box[3]
 
