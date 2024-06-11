@@ -1,43 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- line_extractor front-->
-  <node name="line_extractor" pkg="laser_line_extraction" type="line_extraction_node" ns="collisionFront">
-    <param name="~frequency" value="10" />
-    <param name="~frame_id" value="scan_front" />
-    <param name="~scan_topic" value="/collisionFront/scan_filtered" />
-    <param name="~publish_markers" value="true" />
-    <param name="~bearing_std_dev" value="1e-5" />
-    <param name="~range_std_dev" value="0.012" />
-    <param name="~least_sq_angle_thresh" value="0.0001" />
-    <param name="~least_sq_radius_thresh" value="0.0001" />
-    <param name="~max_line_gap" value="0.5" />
-    <param name="~min_line_length" value="0.4" />
-    <param name="~min_range" value="0.5" />
-    <param name="~max_range" value="250.0" />
-    <param name="~min_split_dist" value="0.04" />
-    <param name="~outlier_dist" value="0.06" />
-    <param name="~min_line_points" value="10" />
-  </node>
-
-  <!-- line_extractor back-->
-  <node name="line_extractor" pkg="laser_line_extraction" type="line_extraction_node" ns="collisionBack">
-    <param name="~frequency" value="10" />
-    <param name="~frame_id" value="scan_back" />
-    <param name="~scan_topic" value="/collisionBack/scan_filtered" />
-    <param name="~publish_markers" value="true" />
-    <param name="~bearing_std_dev" value="1e-5" />
-    <param name="~range_std_dev" value="0.012" />
-    <param name="~least_sq_angle_thresh" value="0.0001" />
-    <param name="~least_sq_radius_thresh" value="0.0001" />
-    <param name="~max_line_gap" value="0.5" />
-    <param name="~min_line_length" value="0.4" />
-    <param name="~min_range" value="0.5" />
-    <param name="~max_range" value="250.0" />
-    <param name="~min_split_dist" value="0.04" />
-    <param name="~outlier_dist" value="0.06" />
-    <param name="~min_line_points" value="10" />
-  </node>
-
   <!-- obstacle_stopper -->
   <node name="obstacle_stopper" pkg="obstacle_stopper" type="obstacle_stopper.py" output="screen"/>
 
