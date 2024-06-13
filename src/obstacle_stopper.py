@@ -23,9 +23,10 @@ class ObstacleStopper:
         # Subscribers and Publishers
         rospy.Subscriber('/nav_vel', Twist, self.nav_vel_callback)
         rospy.Subscriber('/raw_obstacles', Obstacles, self.raw_obstacles_callback)
-        rospy.Subscriber('/yolov8/bounding_boxes', BoundingBoxes, self.yolov8_callback)
+        # rospy.Subscriber('/yolov8/bounding_boxes', BoundingBoxes, self.yolov8_callback)
         
-        self.tel_vel_pub = rospy.Publisher('/tel_vel', Twist, queue_size=10)
+        # self.tel_vel_pub = rospy.Publisher('/tel_vel', Twist, queue_size=10)
+        self.stop_vel_pub = rospy.Publisher('/stop_vel', Twist, queue_size=10)
         self.obstacles_pub = rospy.Publisher('/cleared_obstacles', Obstacles, queue_size=10)
 
         # Sound client for playing audio
@@ -55,32 +56,39 @@ class ObstacleStopper:
     def check_obstacles(self, obstacles_msg, bounding_box_func):
         self.obstacles_detected = False
         for circle in obstacles_msg.circles:
-                if circle.true_radius > 0.05 and bounding_box_func(circle.center.x, circle.center.y):                
-                    rospy.loginfo("Received obstacle at x: %.2f, y: %.2f, radius: %.2f", circle.center.x, circle.center.y, circle.true_radius)
-                    self.obstacles_detected = True
-                    if not self.can_stop():
+                if bounding_box_func(circle.center.x, circle.center.y):
+                    if circle.true_radius > 0.1:
+                        rospy.loginfo("Received obstacle at x: %.2f, y: %.2f, radius: %.2f", circle.center.x, circle.center.y, circle.true_radius)
+                        self.obstacles_detected = True
+                        if not self.can_stop():
+                            return
+                        self.stop_robot()
+                        obstacles_msg = None
+                        self.clear_obstacles()
                         return
-                    self.stop_robot()
-                    self.clear_obstacles()
-                    return
+                    else:
+                        rospy.loginfo("No obstacles detected within the bounding box")
+                        return
         if not self.obstacles_detected:
             rospy.loginfo("No obstacles detected within the bounding box")
+            return
 
-    def yolov8_callback(self, bounding_boxes_msg):
-        if self.linear_velocity >= -0.01:
-            for box in bounding_boxes_msg.bounding_boxes:
-                if box.object_class == "person" and self.is_person_in_front(box):
-                    rospy.loginfo("Person detected at x: %.2f, y: %.2f, z: %.2f", box.x, box.y, box.z)
-                    self.person_detected = True
-                    if not self.can_stop():
-                        return
-                    self.stop_robot()
-                    return
-            if not self.person_detected:
-                rospy.loginfo("No person detected within the bounding box")
+    # def yolov8_callback(self, bounding_boxes_msg):
+    #     if self.linear_velocity >= -0.01:
+    #         for box in bounding_boxes_msg.bounding_boxes:
+    #             if box.object_class == "person" and self.is_person_in_front(box):
+    #                 rospy.loginfo("Person detected at x: %.2f, y: %.2f, z: %.2f", box.x, box.y, box.z)
+    #                 self.person_detected = True
+    #                 if not self.can_stop():
+    #                     return
+    #                 self.stop_robot()
+    #                 bounding_boxes_msg = None
+    #                 return
+    #         if not self.person_detected:
+    #             rospy.loginfo("No person detected within the bounding box")
 
     def is_person_in_front(self, box):
-        return -0.4 <= box.x <= 0.4 and box.z < 2.0
+        return -0.2 <= box.x <= 0.2 and box.z < 2.0
     
     def is_within_front_bounding_box(self, x, y):
         return self.front_bounding_box[0] <= x <= self.front_bounding_box[1] and self.front_bounding_box[2] <= y <= self.front_bounding_box[3]
@@ -89,23 +97,24 @@ class ObstacleStopper:
         return self.back_bounding_box[0] <= x <= self.back_bounding_box[1] and self.back_bounding_box[2] <= y <= self.back_bounding_box[3]
 
     def stop_robot(self):
-        self.soundhandle.playWave(self.warning_sound_path)
+        # self.soundhandle.playWave(self.warning_sound_path)
 
-        tel_vel_msg = Twist()
-        tel_vel_msg.linear.x = 0.0 
-        tel_vel_msg.linear.y = 0.0
-        tel_vel_msg.angular.z = 0.0
+        stop_vel_msg = Twist()
+        stop_vel_msg.linear.x = 0.0 
+        stop_vel_msg.linear.y = 0.0
+        stop_vel_msg.angular.z = 0.0
         self.last_stop_time = rospy.Time.now()
         self.stopped = True
         self.consecutive_stop_count += 1
         rospy.loginfo("Robot paused for 2 seconds due to dynamic obstacle detected.")
         rate = rospy.Rate(10)
         while rospy.Time.now() - self.last_stop_time < self.stop_duration:
-            self.tel_vel_pub.publish(tel_vel_msg)
+            self.stop_vel_pub.publish(stop_vel_msg)
             rate.sleep()
         self.stopped = False
 
     def clear_obstacles(self):
+        rospy.loginfo("Published empty obstacles message to clear obstacles")
         empty_obstacles_msg = Obstacles()
         self.obstacles_pub.publish(empty_obstacles_msg)
         rospy.loginfo("Published empty obstacles message to clear obstacles")
