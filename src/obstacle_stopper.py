@@ -14,7 +14,7 @@ class ObstacleStopper:
         rospy.loginfo("obstacle_stopper started!")
 
         # Parameters
-        self.stop_duration = rospy.Duration(rospy.get_param('~stop_duration', 2.0))
+        self.stop_duration = rospy.Duration(rospy.get_param('~stop_duration', 3.0))
         self.max_consecutive_stops = rospy.get_param('~max_consecutive_stops', 5)
         self.stop_interval = rospy.Duration(rospy.get_param('~stop_interval', 3.0))
         self.front_bounding_box = rospy.get_param('~front_bounding_box', [0.2, 2.2, -0.4, 0.4])
@@ -67,13 +67,14 @@ class ObstacleStopper:
             
     def check_obstacles(self, obstacles_msg, bounding_box_func):
         self.obstacles_detected = False
-        for circle in obstacles_msg.circles:
-            if circle.true_radius > 0.1 and bounding_box_func(circle.center.x, circle.center.y):                
-                rospy.loginfo("Received obstacle at x: %.2f, y: %.2f, radius: %.2f", circle.center.x, circle.center.y, circle.true_radius)
-                self.obstacles_detected = True
-                return True
-        rospy.loginfo("No obstacles detected within the bounding box")
-        return False
+        with self.lock:
+            for circle in obstacles_msg.circles:
+                if circle.true_radius > 0.1 and bounding_box_func(circle.center.x, circle.center.y):                
+                    rospy.loginfo("Received obstacle at x: %.2f, y: %.2f, radius: %.2f", circle.center.x, circle.center.y, circle.true_radius)
+                    self.obstacles_detected = True
+                    return True
+            rospy.loginfo("No obstacles detected within the bounding box")
+            return False
 
     def is_within_front_bounding_box(self, x, y):
         return self.front_bounding_box[0] <= x <= self.front_bounding_box[1] and self.front_bounding_box[2] <= y <= self.front_bounding_box[3]
@@ -109,7 +110,7 @@ class ObstacleStopper:
         # self.cmd_vel_pub.publish(stop_vel_msg)
 
         self.last_stop_time = rospy.Time.now()
-        rospy.loginfo("Robot paused for 2 seconds due to dynamic obstacle detected.")
+        rospy.loginfo("Robot paused for 3 seconds due to dynamic obstacle detected.")
         rospy.Timer(self.stop_duration, self.resume_movement, oneshot=True)
 
     def resume_movement(self, event=None):
@@ -118,15 +119,15 @@ class ObstacleStopper:
             self.pause_navigation_pub.publish(False)
             rospy.loginfo("Resuming movement")
 
-    def can_stop(self):
-        with self.lock:
-            if self.consecutive_stop_count >= self.max_consecutive_stops:
-                if rospy.Time.now() - self.stop_timer < self.stop_interval:
-                    return False
-                else:
-                    self.consecutive_stop_count = 0
-                    self.stop_timer = rospy.Time.now()
-        return True
+    # def can_stop(self):
+    #     with self.lock:
+    #         if self.consecutive_stop_count >= self.max_consecutive_stops:
+    #             if rospy.Time.now() - self.stop_timer < self.stop_interval:
+    #                 return False
+    #             else:
+    #                 self.consecutive_stop_count = 0
+    #                 self.stop_timer = rospy.Time.now()
+    #     return True
 
     def run(self):
         rate = rospy.Rate(10)
