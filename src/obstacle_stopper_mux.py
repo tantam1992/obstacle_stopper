@@ -14,12 +14,14 @@ class ObstacleStopperMux:
 
         self.nav_vel = None
         self.tel_vel = None
+        self.dock_vel = None
         self.is_in_front = False
         self.is_in_back = False
         self.is_in_rotate = False
 
         rospy.Subscriber('/nav_vel', Twist, self.nav_vel_callback)
         rospy.Subscriber('/tel_vel', Twist, self.tel_vel_callback)
+        rospy.Subscriber('/dock_vel', Twist, self.dock_vel_callback)
         rospy.Subscriber('/is_in_front', Bool, self.is_in_front_callback)
         rospy.Subscriber('/is_in_back', Bool, self.is_in_back_callback)
         rospy.Subscriber('/is_in_rotate', Bool, self.is_in_rotate_callback)
@@ -31,6 +33,9 @@ class ObstacleStopperMux:
 
     def tel_vel_callback(self, msg):
         self.tel_vel = msg
+
+    def dock_vel_callback(self, msg):
+        self.dock_vel = msg
 
     def is_in_front_callback(self, msg):
         self.is_in_front = msg.data
@@ -63,6 +68,10 @@ class ObstacleStopperMux:
             if self.tel_vel is not None:
                 rospy.loginfo("tel_vel received")
                 cmd_vel_msg = self.tel_vel
+
+            elif self.dock_vel is not None:
+                rospy.loginfo("dock_vel received")
+                cmd_vel_msg = self.dock_vel
 
             elif self.nav_vel is not None:
                 rospy.loginfo("nav_vel receiving")
