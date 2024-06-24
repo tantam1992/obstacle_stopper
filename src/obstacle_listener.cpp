@@ -12,7 +12,7 @@ public:
         pnh.param("front_bounding_box", front_bounding_box, std::vector<double>{0.2, 2.2, -0.4, 0.4});
         pnh.param("back_bounding_box", back_bounding_box, std::vector<double>{-2.0, -1.0, -0.4, 0.4});
         pnh.param("rotate_front_bounding_box", rotate_front_bounding_box, std::vector<double>{0.2, 1.2, -0.4, 0.4});
-        pnh.param("rotate_back_bounding_box", rotate_back_bounding_box, std::vector<double>{-2.0, -1.0, -0.4, 0.4});
+        pnh.param("rotate_back_bounding_box", rotate_back_bounding_box, std::vector<double>{-1.5, -1.0, -0.4, 0.4});
 
         obstacles_sub = nh.subscribe("/obstacles", 10, &ObstacleListener::obstaclesCallback, this);
         is_in_front_bounding_box_pub = nh.advertise<std_msgs::Bool>("/is_in_front", 10);
