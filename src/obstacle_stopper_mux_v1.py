@@ -3,7 +3,6 @@
 import rospy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool
-from collections import deque
 
 class ObstacleStopperMux:
     def __init__(self):
@@ -29,18 +28,8 @@ class ObstacleStopperMux:
 
         self.rate = rospy.Rate(7.5)
 
-        # Define timeouts and thresholds
-        # self.nav_vel_timeout = rospy.Duration(0.5)  # 0.5 seconds
-        # self.last_nav_vel_time = rospy.Time.now()
-
-        self.obstacle_queue_size = 3
-        self.front_queue = deque([False] * self.obstacle_queue_size, maxlen=self.obstacle_queue_size)
-        self.back_queue = deque([False] * self.obstacle_queue_size, maxlen=self.obstacle_queue_size)
-        self.rotate_queue = deque([False] * self.obstacle_queue_size, maxlen=self.obstacle_queue_size)
-
     def nav_vel_callback(self, msg):
         self.nav_vel = msg
-        # self.last_nav_vel_time = rospy.Time.now()
 
     def tel_vel_callback(self, msg):
         self.tel_vel = msg
@@ -50,18 +39,12 @@ class ObstacleStopperMux:
 
     def is_in_front_callback(self, msg):
         self.is_in_front = msg.data
-        self.front_queue.append(msg.data)
 
     def is_in_back_callback(self, msg):
         self.is_in_back = msg.data
-        self.back_queue.append(msg.data)
 
     def is_in_rotate_callback(self, msg):
         self.is_in_rotate = msg.data
-        self.rotate_queue.append(msg.data)
-
-    def check_obstacle(self, queue):
-        return all(queue)
 
     def run(self):
         while not rospy.is_shutdown():
@@ -90,29 +73,28 @@ class ObstacleStopperMux:
                 rospy.loginfo("dock_vel received")
                 cmd_vel_msg = self.dock_vel
 
-            # elif self.nav_vel is not None and (rospy.Time.now() - self.last_nav_vel_time) < self.nav_vel_timeout:
-            elif self.nav_vel is not None :
-                # rospy.loginfo("nav_vel receiving")
+            elif self.nav_vel is not None:
+                rospy.loginfo("nav_vel receiving")
                 nav_vel_msg = self.nav_vel
                 self.is_moving_forward = nav_vel_msg.linear.x > 0.1
                 self.is_moving_backward = nav_vel_msg.linear.x < -0.1
                 self.is_rotating = (-0.1 <= nav_vel_msg.linear.x <= 0.1) and (nav_vel_msg.angular.z > 0.01 or nav_vel_msg.angular.z < -0.01)
-                # rospy.loginfo("nav_vel received")
+                rospy.loginfo("nav_vel received")
 
                 self.is_able_to_move = False
 
                 if self.is_moving_forward:
-                    if not self.check_obstacle(self.front_queue):
+                    if not self.is_in_front:
                         rospy.loginfo("forward enabled")
                         self.is_able_to_move = True
                         
                 if self.is_moving_backward:
-                    if not self.check_obstacle(self.back_queue):
+                    if not self.is_in_back:
                         rospy.loginfo("backward enabled")
                         self.is_able_to_move = True
 
                 if self.is_rotating:
-                    if not self.check_obstacle(self.rotate_queue):
+                    if not self.is_in_rotate:
                         rospy.loginfo("rotate enabled")
                         self.is_able_to_move = True
 
