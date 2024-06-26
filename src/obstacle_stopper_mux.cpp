@@ -9,7 +9,8 @@ public:
     ObstacleStopperMux() : rate(7.5), obstacle_queue_size(3),
                            front_queue(obstacle_queue_size, false),
                            back_queue(obstacle_queue_size, false),
-                           rotate_queue(obstacle_queue_size, false) {
+                           rotate_queue(obstacle_queue_size, false),
+                           last_dock_vel_time(ros::Time::now()) {
         cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
         sound_play_pub = nh.advertise<std_msgs::Bool>("/play_warning_sound", 10);
 
@@ -40,9 +41,17 @@ public:
             if (tel_vel) {
                 ROS_INFO("tel_vel received");
                 cmd_vel_msg = *tel_vel;
-            } else if (dock_vel) {
-                ROS_INFO("dock_vel received");
-                cmd_vel_msg = *dock_vel;
+                tel_vel.reset(); // Reset tel_vel after processing
+            } else if (dock_vel || (ros::Time::now() - last_dock_vel_time).toSec() < 0.5) {
+                ROS_INFO("dock_vel received or within buffer period");
+                if (dock_vel) {
+                    last_dock_vel = dock_vel; // Store the last received dock_vel
+                    last_dock_vel_time = ros::Time::now();
+                }
+                if (last_dock_vel) {
+                    cmd_vel_msg = *last_dock_vel;
+                }
+                dock_vel.reset(); // Reset dock_vel after processing
             } else if (nav_vel) {
                 geometry_msgs::Twist nav_vel_msg = *nav_vel;
                 is_moving_forward = nav_vel_msg.linear.x > 0.1;
@@ -80,6 +89,8 @@ public:
                     play_sound_msg.data = true;
                     cmd_vel_msg = stop_vel_msg;
                 }
+
+                nav_vel.reset(); // Reset nav_vel after processing
             } else {
                 ROS_INFO("no vel received");
                 cmd_vel_msg = stop_vel_msg;
@@ -87,8 +98,6 @@ public:
 
             sound_play_pub.publish(play_sound_msg);
             cmd_vel_pub.publish(cmd_vel_msg);
-            tel_vel.reset();
-            nav_vel.reset();
             ros::spinOnce();
             rate.sleep();
         }
@@ -109,6 +118,8 @@ private:
     std::shared_ptr<geometry_msgs::Twist> nav_vel;
     std::shared_ptr<geometry_msgs::Twist> tel_vel;
     std::shared_ptr<geometry_msgs::Twist> dock_vel;
+    std::shared_ptr<geometry_msgs::Twist> last_dock_vel;
+    ros::Time last_dock_vel_time;
     bool is_in_front;
     bool is_in_back;
     bool is_in_rotate;
@@ -132,6 +143,7 @@ private:
 
     void dock_vel_callback(const geometry_msgs::Twist::ConstPtr& msg) {
         dock_vel = std::make_shared<geometry_msgs::Twist>(*msg);
+        last_dock_vel_time = ros::Time::now(); // Update the time when dock_vel is received
     }
 
     void is_in_front_callback(const std_msgs::Bool::ConstPtr& msg) {
