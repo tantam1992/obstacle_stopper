@@ -6,7 +6,7 @@
 
 class ObstacleStopperMux {
 public:
-    ObstacleStopperMux() : rate(7.5), obstacle_queue_size(3),
+    ObstacleStopperMux() : rate(15.0), obstacle_queue_size(3),
                            front_queue(obstacle_queue_size, false),
                            back_queue(obstacle_queue_size, false),
                            rotate_queue(obstacle_queue_size, false),
