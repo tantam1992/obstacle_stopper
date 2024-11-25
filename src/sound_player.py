@@ -12,7 +12,7 @@ class SoundPlayer:
         rospy.loginfo("sound_player started!")
 
         # Parameters
-        self.warning_sound_path = rospy.get_param('~warning_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/careful.wav')
+        self.warning_sound_path = rospy.get_param('~warning_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/careful_att.wav')
         self.sound_play_duration = 3.0  # Duration of the sound file in seconds
 
         # Initialize sound client
