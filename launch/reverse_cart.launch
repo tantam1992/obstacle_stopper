@@ -1,8 +1,8 @@
 <launch>
     <!-- Define the node for sound_reverse_player.py -->
-    <node name="sound_reverse_player" pkg="obstacle_stopper" type="sound_reverse_player.py" output="screen">
+    <node name="sound_reverse_beep_player" pkg="obstacle_stopper" type="sound_reverse_player.py" output="screen">
     </node>
     <!-- Define the node for sound_reverse_verbal_player.py -->
-    <node name="sound_reverse_player" pkg="obstacle_stopper" type="sound_reverse_verbal_player.py" output="screen">
+    <node name="sound_reverse_voice_player" pkg="obstacle_stopper" type="sound_reverse_verbal_player.py" output="screen">
     </node>
 </launch>
