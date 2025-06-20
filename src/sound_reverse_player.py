@@ -16,7 +16,7 @@ class ReverseBeepMonitor:
         self.track = pygame.mixer.Sound('/home/u/tko_ws/src/obstacle_stopper/voice/single_beep.wav')  # Replace with your audio file path
         
         # Set the volume (0.0 to 1.0)
-        self.volume = 0.3  # Adjust this value as needed
+        self.volume = 0.2  # Adjust this value as needed
         self.track.set_volume(self.volume)
         
         self.signaling_flag = False

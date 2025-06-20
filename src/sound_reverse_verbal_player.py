@@ -13,10 +13,10 @@ class ReverseVoiceMonitor:
         
         # Initialize pygame
         pygame.mixer.init()
-        self.track = pygame.mixer.Sound('/home/u/tko_ws/src/obstacle_stopper/voice/reverse_voice_amplified.wav')  # Replace with your audio file path
+        self.track = pygame.mixer.Sound('/home/u/tko_ws/src/obstacle_stopper/voice/reverse_voice.wav')  # Replace with your audio file path
 
         # Set the volume (0.0 to 1.0)
-        self.volume = 1  # Adjust this value as needed
+        self.volume = 0.8  # Adjust this value as needed
         self.track.set_volume(self.volume)
 
         self.signaling_flag = False

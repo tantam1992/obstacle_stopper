@@ -2,6 +2,7 @@
 
 import rospy
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Bool
 
 class SoundRotationPlayer:
     def __init__(self):
@@ -28,7 +29,7 @@ class SoundRotationPlayer:
     def run(self):
         while not rospy.is_shutdown():
             if self.signaling_flag:
-                 self.subscriber.rotation_sound_play_pub.publish(True)
+                self.rotation_sound_play_pub.publish(True)
                 self.signaling_flag = False
             self.rate.sleep()  # Wait for the specified rate
 
