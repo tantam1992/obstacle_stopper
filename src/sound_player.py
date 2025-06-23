@@ -13,11 +13,11 @@ class SoundPlayer:
 
         # Parameters
         self.warning_sound_path = rospy.get_param('~warning_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/excuesme.wav')
-        self.still_sound_path = rospy.get_param('~still_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/excuesme.wav')  # Add still sound path
-        self.rotation_sound_path = rospy.get_param('~rotation_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/excuesme.wav')  # Add rotation sound path
+        self.still_sound_path = rospy.get_param('~still_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/still.wav')  # Add still sound path
+        self.rotation_sound_path = rospy.get_param('~rotation_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/rotation.wav')  # Add rotation sound path
         
         self.warning_sound_play_duration = rospy.get_param('~warning_sound_play_duration', 4.0)  # Duration of the sound file in seconds
-        self.still_sound_play_duration = rospy.get_param('~still_sound_play_duration', 4.0)  # Duration of the sound file in seconds
+        self.still_sound_play_duration = rospy.get_param('~still_sound_play_duration', 6.0)  # Duration of the sound file in seconds
         self.rotation_sound_play_duration = rospy.get_param('~rotation_sound_play_duration', 4.0)  # Duration of the sound file in seconds
 
         # Initialize sound client
