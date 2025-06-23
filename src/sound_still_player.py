@@ -17,11 +17,13 @@ class SoundStillPlayer:
 
         self.signaling_flag = False
         self.goal_status = None
+        self.still_time = 0  # Time the robot has been still
         self.rate = rospy.Rate(1)  # 1 second interval
 
         # Parameters for detecting stay in place
         self.linear_threshold = 0.05
         self.angular_threshold = 0.05
+        self.still_duration = 3  # Duration in seconds to stay still
 
     def goal_status_callback(self, GoalStatus):
         if GoalStatus.status_list:
@@ -37,12 +39,18 @@ class SoundStillPlayer:
             self.signaling_flag = True
         else:
             self.signaling_flag = False
+            self.still_time = 0  # Reset the still time if moving
 
     def run(self):
         while not rospy.is_shutdown():
             if self.signaling_flag and self.goal_status in [1, 2]:
-                self.still_sound_play_pub.publish(True)
-                self.signaling_flag = False  # Reset after publishing
+                self.still_time += 1  # Increment still time
+                if self.still_time >= self.still_duration:
+                    self.still_sound_play_pub.publish(True)
+                    self.still_time = 0  # Reset after publishing
+            else:
+                self.still_time = 0  # Reset if not still
+
             self.rate.sleep()  # Wait for the specified rate
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 <launch>
 
-    <!-- <node name="sound_player" pkg="obstacle_stopper" type="sound_rotation_player.py"/> -->
+    <node name="sound_player" pkg="obstacle_stopper" type="sound_rotation_player.py"/>
     <!-- <node name="sound_player" pkg="obstacle_stopper" type="sound_still_player.py"/> -->
     <node name="sound_player" pkg="obstacle_stopper" type="sound_player.py" output="screen"/>
 
