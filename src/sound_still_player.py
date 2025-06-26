@@ -23,7 +23,7 @@ class SoundStillPlayer:
         # Parameters for detecting stay in place
         self.linear_threshold = 0.05
         self.angular_threshold = 0.05
-        self.still_duration = 3  # Duration in seconds to stay still
+        self.still_duration = 7  # Duration in seconds to stay still
 
     def goal_status_callback(self, GoalStatus):
         if GoalStatus.status_list:
