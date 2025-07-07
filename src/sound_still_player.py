@@ -50,7 +50,7 @@ class SoundStillPlayer:
     def run(self):
         while not rospy.is_shutdown():
             # Publish sound only if not in TRANSFORMED or TRANSFORMING state
-            if self.fold_state not in ["TRANSFORMED", "TRANSFORMING"] and self.signaling_flag and self.goal_status in [1, 2]:
+            if self.fold_state not in ["TRANSFORMED", "TRANSFORMING", "OPERATIONAL/UNLOADING"] and self.signaling_flag and self.goal_status in [1, 2]:
                 self.still_time += 1  # Increment still time
                 if self.still_time >= self.still_duration:
                     self.still_sound_play_pub.publish(True)
