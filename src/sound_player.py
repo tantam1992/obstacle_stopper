@@ -48,7 +48,7 @@ class SoundPlayer:
             self.play_sound(self.still_sound_path, self.still_sound_play_duration)
 
     def play_rotation_sound_callback(self, msg):
-        if self.run_enabled and msg.data:
+        if msg.data:
             self.play_sound(self.rotation_sound_path, self.rotation_sound_play_duration)
 
     def play_sound(self, sound_path, sound_play_duration):
