@@ -13,36 +13,42 @@ class SoundPlayer:
 
         # Parameters
         self.warning_sound_path = rospy.get_param('~warning_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/excuesme.wav')
-        self.still_sound_path = rospy.get_param('~still_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/still.wav')  # Add still sound path
-        self.rotation_sound_path = rospy.get_param('~rotation_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/rotation.wav')  # Add rotation sound path
+        self.still_sound_path = rospy.get_param('~still_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/still.wav')
+        self.rotation_sound_path = rospy.get_param('~rotation_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/rotation.wav')
         
-        self.warning_sound_play_duration = rospy.get_param('~warning_sound_play_duration', 4.0)  # Duration of the sound file in seconds
-        self.still_sound_play_duration = rospy.get_param('~still_sound_play_duration', 7.0)  # Duration of the sound file in seconds
-        self.rotation_sound_play_duration = rospy.get_param('~rotation_sound_play_duration', 4.0)  # Duration of the sound file in seconds
+        self.warning_sound_play_duration = rospy.get_param('~warning_sound_play_duration', 4.0)
+        self.still_sound_play_duration = rospy.get_param('~still_sound_play_duration', 7.0)
+        self.rotation_sound_play_duration = rospy.get_param('~rotation_sound_play_duration', 4.0)
 
         # Initialize sound client
         self.soundhandle = SoundClient()
 
-        # Initialize sound_playing flag and lock
+        # Flags
         self.sound_playing = False
+        self.run_enabled = True  # Set by /play_sound topic
         self.sound_lock = threading.Lock()
         self.play_sound_thread = None
 
         # Subscribers
         rospy.Subscriber('/play_warning_sound', Bool, self.play_warning_sound_callback)
-        rospy.Subscriber('/play_still_sound', Bool, self.play_still_sound_callback)  # Add still sound subscriber
-        rospy.Subscriber('/play_rotation_sound', Bool, self.play_rotation_sound_callback)  # Add rotation sound subscriber
+        rospy.Subscriber('/play_still_sound', Bool, self.play_still_sound_callback)
+        rospy.Subscriber('/play_rotation_sound', Bool, self.play_rotation_sound_callback)
+        rospy.Subscriber('/play_sound', Bool, self.play_sound_enable_callback)
+
+    def play_sound_enable_callback(self, msg):
+        self.run_enabled = msg.data
+        rospy.loginfo(f"Sound player enabled: {self.run_enabled}")
 
     def play_warning_sound_callback(self, msg):
-        if msg.data:
+        if self.run_enabled and msg.data:
             self.play_sound(self.warning_sound_path, self.warning_sound_play_duration)
 
     def play_still_sound_callback(self, msg):
-        if msg.data:
+        if self.run_enabled and msg.data:
             self.play_sound(self.still_sound_path, self.still_sound_play_duration)
 
     def play_rotation_sound_callback(self, msg):
-        if msg.data:
+        if self.run_enabled and msg.data:
             self.play_sound(self.rotation_sound_path, self.rotation_sound_play_duration)
 
     def play_sound(self, sound_path, sound_play_duration):
