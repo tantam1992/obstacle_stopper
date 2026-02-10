@@ -16,11 +16,13 @@ class SoundPlayer:
         self.still_sound_path = rospy.get_param('~still_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/still.wav')
         self.rotation_sound_path = rospy.get_param('~rotation_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/rotation.wav')
         self.enterlift_sound_path = rospy.get_param('~enterlift_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/enterlift.wav')
+        self.cartdock_sound_path = rospy.get_param('~cartdock_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/single_do.wav') # Added cartdock sound path
 
         self.warning_sound_play_duration = rospy.get_param('~warning_sound_play_duration', 4.0)
         self.still_sound_play_duration = rospy.get_param('~still_sound_play_duration', 7.0)
         self.rotation_sound_play_duration = rospy.get_param('~rotation_sound_play_duration', 4.0)
         self.enterlift_sound_play_duration = rospy.get_param('~enterlift_sound_play_duration', 5.0)
+        self.cartdock_sound_play_duration = rospy.get_param('~cartdock_sound_play_duration', 1.0) # Added cartdock sound duration
 
         # Initialize sound client
         self.soundhandle = SoundClient()
@@ -37,6 +39,7 @@ class SoundPlayer:
         rospy.Subscriber('/play_rotation_sound', Bool, self.play_rotation_sound_callback)
         rospy.Subscriber('/play_enterlift_sound', Bool, self.play_enterlift_sound_callback)
         rospy.Subscriber('/play_sound', Bool, self.play_sound_enable_callback)
+        rospy.Subscriber('/play_cartdock_sound', Bool, self.play_cartdock_sound_callback) # Added cartdock sound subscriber
 
     def play_sound_enable_callback(self, msg):
         self.run_enabled = msg.data
@@ -57,6 +60,10 @@ class SoundPlayer:
     def play_enterlift_sound_callback(self, msg):
         if msg.data:
             self.play_sound(self.enterlift_sound_path, self.enterlift_sound_play_duration)
+
+    def play_cartdock_sound_callback(self, msg): # Added cartdock sound callback
+        if msg.data:
+            self.play_sound(self.cartdock_sound_path, self.cartdock_sound_play_duration)
 
     def play_sound(self, sound_path, sound_play_duration):
         with self.sound_lock:
