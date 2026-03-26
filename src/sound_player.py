@@ -16,13 +16,13 @@ class SoundPlayer:
         self.still_sound_path = rospy.get_param('~still_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/still.wav')
         self.rotation_sound_path = rospy.get_param('~rotation_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/rotation.wav')
         self.enterlift_sound_path = rospy.get_param('~enterlift_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/enterlift.wav')
-        self.cartdock_sound_path = rospy.get_param('~cartdock_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/single_do.wav') # Added cartdock sound path
+        self.cartdock_sound_path = rospy.get_param('~cartdock_sound_path', '/home/u/tko_ws/src/obstacle_stopper/voice/cartdock_voice.wav') # Added cartdock sound path
 
         self.warning_sound_play_duration = rospy.get_param('~warning_sound_play_duration', 4.0)
         self.still_sound_play_duration = rospy.get_param('~still_sound_play_duration', 7.0)
         self.rotation_sound_play_duration = rospy.get_param('~rotation_sound_play_duration', 4.0)
         self.enterlift_sound_play_duration = rospy.get_param('~enterlift_sound_play_duration', 5.0)
-        self.cartdock_sound_play_duration = rospy.get_param('~cartdock_sound_play_duration', 1.0) # Added cartdock sound duration
+        self.cartdock_sound_play_duration = rospy.get_param('~cartdock_sound_play_duration', 5.0) # Added cartdock sound duration
 
         # Initialize sound client
         self.soundhandle = SoundClient()
